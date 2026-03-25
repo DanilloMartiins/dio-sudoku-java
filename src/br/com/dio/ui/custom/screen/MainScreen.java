@@ -2,7 +2,6 @@ package br.com.dio.ui.custom.screen;
 
 import br.com.dio.model.Space;
 import br.com.dio.service.BoardService;
-import br.com.dio.service.EventEnum;
 import br.com.dio.service.NotifierService;
 import br.com.dio.ui.custom.button.CheckGameStatusButton;
 import br.com.dio.ui.custom.button.FinishGameButton;
@@ -14,7 +13,6 @@ import br.com.dio.ui.custom.panel.SudokuSector;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -22,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import static br.com.dio.service.EventEnum.CLEAR_SPACE;
+import static br.com.dio.util.GameConstants.BOARD_LIMIT;
+import static br.com.dio.util.GameConstants.SECTOR_SIZE;
 import static javax.swing.JOptionPane.QUESTION_MESSAGE;
 import static javax.swing.JOptionPane.YES_NO_OPTION;
 import static javax.swing.JOptionPane.showConfirmDialog;
@@ -46,10 +46,10 @@ public class MainScreen {
     public void buildMainScreen(){
         JPanel mainPanel = new MainPanel(dimension);
         JFrame mainFrame = new MainFrame(dimension, mainPanel);
-        for (int r = 0; r < 9; r+=3) {
-            var endRow = r + 2;
-            for (int c = 0; c < 9; c+=3) {
-                var endCol = c + 2;
+        for (int r = 0; r < BOARD_LIMIT; r += SECTOR_SIZE) {
+            var endRow = r + (SECTOR_SIZE - 1);
+            for (int c = 0; c < BOARD_LIMIT; c += SECTOR_SIZE) {
+                var endCol = c + (SECTOR_SIZE - 1);
                 var spaces = getSpacesFromSector(boardService.getSpaces(), c, endCol, r, endRow);
                 JPanel sector = generateSection(spaces);
                 mainPanel.add(sector);

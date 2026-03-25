@@ -2,17 +2,30 @@ package br.com.dio;
 
 import br.com.dio.ui.custom.screen.MainScreen;
 
-import java.util.stream.Stream;
+import java.util.Map;
 
-import static java.util.stream.Collectors.toMap;
+import static br.com.dio.util.DefaultGameConfig.resolveArgs;
+import static br.com.dio.util.GameConfigParser.parseArgs;
 
 public class UIMain {
 
     public static void main(String[] args) {
-        final var gameConfig = Stream.of(args)
-                .collect(toMap(k -> k.split(";")[0], v -> v.split(";")[1]));
+        final var gameConfig = tryParse(resolveArgs(args));
+        if (gameConfig == null) {
+            return;
+        }
+
         var mainsScreen = new MainScreen(gameConfig);
         mainsScreen.buildMainScreen();
+    }
+
+    private static Map<String, String> tryParse(final String[] args) {
+        try {
+            return parseArgs(args);
+        } catch (IllegalArgumentException ex) {
+            System.out.println(ex.getMessage());
+            return null;
+        }
     }
 
 }

@@ -6,6 +6,12 @@ import java.util.List;
 import static br.com.dio.model.GameStatusEnum.COMPLETE;
 import static br.com.dio.model.GameStatusEnum.INCOMPLETE;
 import static br.com.dio.model.GameStatusEnum.NON_STARTED;
+import static br.com.dio.model.MoveValidationResult.CONFLICT;
+import static br.com.dio.model.MoveValidationResult.FIXED_POSITION;
+import static br.com.dio.model.MoveValidationResult.INVALID_POSITION;
+import static br.com.dio.model.MoveValidationResult.VALID;
+import static br.com.dio.util.GameConstants.BOARD_LIMIT;
+import static br.com.dio.util.GameConstants.SECTOR_SIZE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
@@ -39,16 +45,19 @@ public class Board {
     }
 
     public boolean changeValue(final int col, final int row, final int value){
-        var space = spaces.get(col).get(row);
-        if (space.isFixed()){
+        if (validateMove(col, row, value) != VALID){
             return false;
         }
 
-        space.setActual(value);
+        spaces.get(col).get(row).setActual(value);
         return true;
     }
 
     public boolean clearValue(final int col, final int row){
+        if (!positionExists(col, row)){
+            return false;
+        }
+
         var space = spaces.get(col).get(row);
         if (space.isFixed()){
             return false;
@@ -64,6 +73,83 @@ public class Board {
 
     public boolean gameIsFinished(){
         return !hasErrors() && getStatus().equals(COMPLETE);
+    }
+
+    public MoveValidationResult validateMove(final int col, final int row, final int value) {
+        if (!positionExists(col, row)){
+            return INVALID_POSITION;
+        }
+
+        final var space = spaces.get(col).get(row);
+        if (space.isFixed()){
+            return FIXED_POSITION;
+        }
+
+        if (hasConflicts(col, row, value)){
+            return CONFLICT;
+        }
+
+        return VALID;
+    }
+
+    private boolean hasConflicts(final int col, final int row, final int value) {
+        return hasConflictInRow(col, row, value)
+                || hasConflictInColumn(col, row, value)
+                || hasConflictInSector(col, row, value);
+    }
+
+    private boolean hasConflictInRow(final int currentCol, final int row, final int value) {
+        for (int col = 0; col < BOARD_LIMIT; col++) {
+            if (col == currentCol){
+                continue;
+            }
+            final var actual = spaces.get(col).get(row).getActual();
+            if (nonNull(actual) && actual == value){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasConflictInColumn(final int col, final int currentRow, final int value) {
+        for (int row = 0; row < BOARD_LIMIT; row++) {
+            if (row == currentRow){
+                continue;
+            }
+            final var actual = spaces.get(col).get(row).getActual();
+            if (nonNull(actual) && actual == value){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasConflictInSector(final int currentCol, final int currentRow, final int value) {
+        final int initialCol = (currentCol / SECTOR_SIZE) * SECTOR_SIZE;
+        final int initialRow = (currentRow / SECTOR_SIZE) * SECTOR_SIZE;
+
+        for (int col = initialCol; col < initialCol + SECTOR_SIZE; col++) {
+            for (int row = initialRow; row < initialRow + SECTOR_SIZE; row++) {
+                if (col == currentCol && row == currentRow){
+                    continue;
+                }
+                final var actual = spaces.get(col).get(row).getActual();
+                if (nonNull(actual) && actual == value){
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean positionExists(final int col, final int row) {
+        return col >= 0
+                && col < spaces.size()
+                && row >= 0
+                && row < spaces.get(col).size();
     }
 
 }
